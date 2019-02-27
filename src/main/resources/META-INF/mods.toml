@@ -1,0 +1,7 @@
+modLoader="javafml" #mandatory
+loaderVersion="[25,)" #mandatory (24 is current forge version)
+[[mods]] #mandatory
+modId="connect" #mandatory
+version="${file.jarVersion}" #mandatory
+displayName="ReforgedConnect" #mandatory
+description="Reforged server list"
