@@ -1,0 +1,39 @@
+buildscript {
+    repositories {
+        maven { url = "https://files.minecraftforge.net/maven" }
+        jcenter()
+        mavenCentral()
+    }
+    dependencies {
+        classpath group: "net.minecraftforge.gradle", name: "ForgeGradle", version: "3.+", changing: true
+    }
+}
+
+apply plugin: "net.minecraftforge.gradle"
+apply plugin: "eclipse"
+apply plugin: "java"
+
+group = mod_group
+version = "${mod_version}-mc${minecraft_version}-${forge_version}"
+
+minecraft {
+    mappings channel: mcp_channel, version: mcp_version
+    runs {
+        client {
+            properties "forge.logging.markers": "SCAN,REGISTRIES,REGISTRYDUMP"
+            properties "forge.logging.console.level": "debug"
+            workingDirectory project.file("client").canonicalPath
+            source sourceSets.main
+        }
+        server {
+            properties "forge.logging.markers": "SCAN,REGISTRIES,REGISTRYDUMP"
+            properties "forge.logging.console.level": "debug"
+            workingDirectory project.file("server").canonicalPath
+            source sourceSets.main
+        }
+    }
+}
+
+dependencies {
+    minecraft "net.minecraftforge:forge:${minecraft_version}-${forge_version}"
+}
