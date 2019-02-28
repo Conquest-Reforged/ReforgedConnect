@@ -1,28 +1,41 @@
 package com.conquestreforged.connect.http;
 
-import java.util.concurrent.Future;
-import java.util.concurrent.TimeUnit;
+import java.util.Optional;
+import java.util.concurrent.*;
 import java.util.function.Consumer;
+import java.util.function.Supplier;
 
-public interface Response<T> {
+public class Response<T> {
 
-    Response EMPTY = () -> null;
+    private final Future<T> future;
 
-    T get() throws Exception;
-
-    default boolean done() {
-        return false;
+    private Response(Future<T> future) {
+        this.future = future;
     }
 
-    default boolean present() {
-        return this != EMPTY;
+    public T get() throws Exception {
+        return future.get();
     }
 
-    default boolean poll(Consumer<T> consumer) {
+    public Optional<T> get(long timeout, TimeUnit unit) {
+        if (await(timeout, unit)) {
+            try {
+                return Optional.ofNullable(get());
+            } catch (Exception e) {
+                return Optional.empty();
+            }
+        }
+        return Optional.empty();
+    }
+
+    public boolean done() {
+        return future.isDone();
+    }
+
+    public boolean poll(Consumer<T> consumer) {
         if (done()) {
             try {
-                T t = get();
-                consumer.accept(t);
+                consumer.accept(get());
             } catch (Exception e) {
                 e.printStackTrace();
             }
@@ -31,44 +44,30 @@ public interface Response<T> {
         return false;
     }
 
-    default void await() {
-        await(-1, TimeUnit.MILLISECONDS);
+    public void await() {
+        //noinspection StatementWithEmptyBody
+        while (!done()) {}
     }
 
-    default void await(long timeout, TimeUnit unit) {
-        if (!present()) {
-            return;
+    public boolean await(long timeout, TimeUnit unit) {
+        if (timeout < 0) {
+            return false;
         }
-        if (timeout == -1) {
-            while (!done()) {
-            }
-        } else {
-            long period = unit.toMillis(timeout);
-            long start = System.currentTimeMillis();
-            while (!done()) {
-                if (System.currentTimeMillis() - start > period) {
-                    break;
-                }
+        long period = unit.toMillis(timeout);
+        long start = System.currentTimeMillis();
+        while (!done()) {
+            if (System.currentTimeMillis() - start > period) {
+                return false;
             }
         }
+        return true;
     }
 
-    @SuppressWarnings("unchecked")
-    static <T> Response<T> empty() {
-        return EMPTY;
+    public static <T> Response<T> of(Supplier<T> task) {
+        return new Response<>(new FutureTask<>(task::get));
     }
 
-    static <T> Response<T> of(Future<T> task) {
-        return new Response<T>() {
-            @Override
-            public T get() throws Exception {
-                return task.get();
-            }
-
-            @Override
-            public boolean done() {
-                return task.isDone();
-            }
-        };
+    public static <T> Response<T> of(Future<T> task) {
+        return new Response<>(task);
     }
 }

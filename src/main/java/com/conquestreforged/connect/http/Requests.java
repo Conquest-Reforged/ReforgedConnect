@@ -33,18 +33,18 @@ public final class Requests {
     }
 
     public static Request<byte[]> getBytes(String address) {
-        return () -> GET_BYTES.apply(address);
+        return () -> GET_BYTES.map(address);
     }
 
-    public static Request<JsonElement> getJson(String address) {
-        return () -> GET_JSON.apply(address);
+    public static Request<JsonElement> getJson(String address, Object... args) {
+        return () -> GET_JSON.map(String.format(address, args));
     }
 
-    public static <T> Request.Function<JsonElement, T> unmarshal(Class<T> type) {
+    public static <T> Request.Mapper<JsonElement, T> unmarshal(Class<T> type) {
         return e -> gson.fromJson(e, type);
     }
 
-    public static final Request.Function<String, byte[]> GET_BYTES = address -> {
+    public static final Request.Mapper<String, byte[]> GET_BYTES = address -> {
         HttpGet get = new HttpGet(address);
         try (CloseableHttpResponse response = client.execute(get)) {
             try (InputStream in = response.getEntity().getContent()) {
@@ -58,7 +58,7 @@ public final class Requests {
         }
     };
 
-    public static final Request.Function<String, JsonElement> GET_JSON = address -> {
+    public static final Request.Mapper<String, JsonElement> GET_JSON = address -> {
         HttpGet get = new HttpGet(address);
         try (CloseableHttpResponse response = client.execute(get)) {
             try (InputStream in = response.getEntity().getContent()) {

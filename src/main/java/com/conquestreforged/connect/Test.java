@@ -9,9 +9,9 @@ import java.util.List;
 public class Test {
 
     public static void main(String[] args) throws Exception {
-        Response<List<ServerInfo>> response = Requests.getJson(ServerInfo.DATA_URL)
+        Response<List<ServerInfo>> response = Requests.getJson(ServerInfo.SERVERS_URL)
                 .then(ServerInfo::unmarshalServers)
-                .then(ServerInfo::filterServers)
+                .then(ServerInfo::filter)
                 .send();
 
         System.out.println("working:");
